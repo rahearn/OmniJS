@@ -1,0 +1,35 @@
+/*{
+    "author": "Ryan Ahearn",
+    "targets": ["omnifocus"],
+    "type": "action",
+    "identifier": "net.rcahearn.customize_repeat_instance",
+    "version": "0.1",
+    "description": "Customize this instance of a repeat task by duplicating and skipping the orignial task and editing the new one",
+    "label": "Customize Instance",
+    "mediumLabel": "Customize Instance",
+    "paletteLabel": "Customize Instance",
+}*/
+(() => {
+    var action = new PlugIn.Action(function(selection) {
+        let task = selection.tasks[0]
+        console.log("Customizing: ", task.name)
+
+        let insertionPoint = task.containingProject
+        let dup = duplicateTasks([task], insertionPoint)[0]
+
+        dup.repetitionRule = null
+        task.drop(false)
+        URL.fromString("omnifocus:///task/" + dup.id.primaryKey).open()
+    });
+
+    action.validate = function(selection){
+      const lengthValid = selection.tasks.length === 1
+      if (!lengthValid) { return false }
+      const task = selection.tasks[0]
+      const repeatValid = task.repetitionRule !== null
+      const projectValid = task.containingProject !== null
+      return repeatValid && projectValid
+    };
+        
+    return action;
+})();

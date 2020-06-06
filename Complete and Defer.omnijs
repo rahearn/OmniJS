@@ -1,0 +1,35 @@
+/*{
+    "author": "Ryan Ahearn",
+    "targets": ["omnifocus"],
+    "type": "action",
+    "identifier": "net.rcahearn.complete_and_defer",
+    "version": "0.1",
+    "description": "Mark the selected action as complete and defer the next action for X days",
+    "label": "Complete and Defer",
+    "mediumLabel": "Complete and Defer",
+    "paletteLabel": "Complete and Defer",
+}*/
+(() => {
+    var action = new PlugIn.Action(function(selection) {
+        let task = selection.tasks[0]
+        console.log("Customizing: ", task.name)
+
+        let insertionPoint = task.containingProject
+        let dup = duplicateTasks([task], insertionPoint)[0]
+
+        dup.repetitionRule = null
+        task.drop(false)
+        URL.fromString("omnifocus:///task/" + dup.id.primaryKey).open()
+    });
+
+    action.validate = function(selection){
+      const lengthValid = selection.tasks.length === 1
+      if (!lengthValid) { return false }
+      const task = selection.tasks[0]
+      const repeatValid = task.repetitionRule !== null
+      const projectValid = task.containingProject !== null
+      return repeatValid && projectValid
+    };
+        
+    return action;
+})();
