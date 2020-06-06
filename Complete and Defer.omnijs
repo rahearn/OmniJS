@@ -12,23 +12,47 @@
 (() => {
     var action = new PlugIn.Action(function(selection) {
         let task = selection.tasks[0]
-        console.log("Customizing: ", task.name)
+        console.log("Waiting after: ", task.name)
 
-        let insertionPoint = task.containingProject
-        let dup = duplicateTasks([task], insertionPoint)[0]
+        let nextWeek = Calendar.current.startOfDay(new Date())
+        nextWeek.setDate(nextWeek.getDate() + 7)
+        
+        const dateInputField = new Form.Field.Date(
+        	"dateInput",
+        	null,
+        	nextWeek
+        )
 
-        dup.repetitionRule = null
-        task.drop(false)
-        URL.fromString("omnifocus:///task/" + dup.id.primaryKey).open()
+		const inputForm = new Form()
+		inputForm.addField(dateInputField)
+		const formPrompt = "Defer until:"
+		const buttonTitle = "Continue"
+		const formPromise = inputForm.show(formPrompt, buttonTitle)
+
+		inputForm.validate = function(formObject) {
+			const dateInput = formObject.values["dateInput"]
+			return dateInput != null
+		}
+
+		formPromise.then(function(formObject) {
+	        let waitTask = new Task("Ready to proceed", task.after)
+	        waitTask.addTag(Tag.forecastTag)    
+	        waitTask.deferDate = formObject.values["dateInput"]
+        
+	        task.markComplete()
+		})
+
+		formPromise.catch(function(error) {
+			console.log("form cancelled", error.message)
+		})
     });
 
     action.validate = function(selection){
       const lengthValid = selection.tasks.length === 1
       if (!lengthValid) { return false }
       const task = selection.tasks[0]
-      const repeatValid = task.repetitionRule !== null
-      const projectValid = task.containingProject !== null
-      return repeatValid && projectValid
+      const statusValid = !task.completed
+      return statusValid
     };
         
     return action;
