@@ -19,24 +19,31 @@
         
         const dateInputField = new Form.Field.Date(
         	"dateInput",
-        	null,
+        	"Defer until:",
         	nextWeek
+        )
+        const taskNameField = new Form.Field.String(
+        	"taskName",
+        	"Task name:",
+        	"Ready to proceed"
         )
 
 		const inputForm = new Form()
+		inputForm.addField(taskNameField)
 		inputForm.addField(dateInputField)
-		const formPrompt = "Defer until:"
+		const formPrompt = "Create Waiting Task"
 		const buttonTitle = "Continue"
 		const formPromise = inputForm.show(formPrompt, buttonTitle)
 
 		inputForm.validate = function(formObject) {
 			const dateInput = formObject.values["dateInput"]
-			return dateInput != null
+			const taskName = formObject.values["taskName"]
+			return dateInput != null && taskName !== ""
 		}
 
 		formPromise.then(function(formObject) {
-	        let waitTask = new Task("Ready to proceed", task.after)
-	        waitTask.addTag(Tag.forecastTag)    
+	        let waitTask = new Task(formObject.values["taskName"], task.after)
+	        waitTask.addTag(Tag.forecastTag)
 	        waitTask.deferDate = formObject.values["dateInput"]
         
 	        task.markComplete()
