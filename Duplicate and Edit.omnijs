@@ -1,0 +1,28 @@
+/*{
+    "author": "Ryan Ahearn",
+    "targets": ["omnifocus"],
+    "type": "action",
+    "identifier": "net.rcahearn.duplicate_and_edit",
+    "version": "0.1",
+    "description": "Duplicate this task and edit the new one",
+    "label": "Duplicate & Edit",
+    "mediumLabel": "Duplicate and Edit",
+    "paletteLabel": "Duplicate and Edit",
+}*/
+(() => {
+    var action = new PlugIn.Action(function(selection) {
+        let task = selection.tasks[0]
+        console.log("Duplicating: ", task.name)
+
+        let insertionPoint = task.after
+        let dup = duplicateTasks([task], insertionPoint)[0]
+
+        URL.fromString("omnifocus:///task/" + dup.id.primaryKey).open()
+    });
+
+    action.validate = function(selection){
+      return selection.tasks.length === 1
+    };
+        
+    return action;
+})();
