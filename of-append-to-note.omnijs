@@ -1,0 +1,80 @@
+/*{
+	"type": "action",
+	"targets": ["omnifocus"],
+	"author": "Otto Automator",
+	"identifier": "com.omni-automation.of.append-to-note",
+	"version": "1.0",
+	"description": "This action will append the provided text to the end of the note of the current task.",
+	"label": "Append to Note",
+	"shortLabel": "Append to Note"
+}*/
+(() => {
+	var action = new PlugIn.Action(function(selection, sender){
+		// action code
+		// selection options: tasks, projects, folders, tags, allObjects
+		var task = selection.tasks[0]
+		
+		var textInputField = new Form.Field.String(
+			"textInput",
+			null,
+			null
+		)
+		
+		var checkSwitchField1 = new Form.Field.Checkbox(
+			"shouldIncludeTimeStamp",
+			"Include date/time stamp",
+			true
+		)
+				
+		var menuItems = ["Nothing","Single Space", "Double Space","Single Line","Double Line"]
+		var spacingItems = [""," ","  ","\n","\n\n"]
+		var menuIndexes = [0,1,2,3,4]
+
+		var menuElement = new Form.Field.Option(
+			"spacingMethod", 
+			"Prepend with", 
+			menuIndexes, 
+			menuItems, 
+			4
+		)
+		menuElement.allowsNull = false
+		
+		var inputForm = new Form()
+		inputForm.addField(textInputField)
+		inputForm.addField(menuElement)
+		inputForm.addField(checkSwitchField1)
+		var formPrompt = "Enter the text to be appended to the note:"
+		var buttonTitle = "Continue"
+		var formPromise = inputForm.show(formPrompt,buttonTitle)
+
+		inputForm.validate = function(formObject){
+			inputText = formObject.values['textInput']
+			return ((!inputText)?false:true)
+		}
+
+		formPromise.then(function(formObject){
+			var textValue = formObject.values['textInput']
+			var shouldIncludeTimeStamp = formObject.values['shouldIncludeTimeStamp']
+			var spacingMethodIndex = formObject.values['spacingMethod']
+			if(shouldIncludeTimeStamp){
+				var timeStamp = new Date().toLocaleString()
+				textValue = timeStamp + "\n" + textValue
+			}
+			var prependText = spacingItems[spacingMethodIndex]
+			task.appendStringToNote(prependText + textValue)
+		})
+
+		formPromise.catch(function(err){
+			console.error("form cancelled", err.message)
+		})		
+		
+	});
+
+	action.validate = function(selection, sender){
+		// validation code
+		// selection options: tasks, projects, folders, tags, allObjects
+		return (selection.tasks.length === 1)
+	};
+	
+	return action;
+})();
