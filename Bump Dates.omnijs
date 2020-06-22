@@ -1,0 +1,60 @@
+/*{
+    "author": "Ryan Ahearn",
+    "targets": ["omnifocus"],
+    "type": "action",
+    "identifier": "net.rcahearn.bump_dates",
+    "version": "0.1",
+    "description": "A plug-in that bumps defer and/or due dates out the amount given",
+    "label": "Bump Dates",
+    "mediumLabel": "Bump Dates",
+    "paletteLabel": "Bump Dates",
+}*/
+(() => {
+    var action = new PlugIn.Action(function(selection) {
+      
+      const calendar = Calendar.current;
+      const defaultDefer = calendar.startOfDay(new Date())
+
+      const daysInputField = new Form.Field.String(
+        "bumpDays",
+        "Days to bump dates:"
+      )
+      const inputForm = new Form()
+      inputForm.addField(daysInputField)
+      const formPrompt = "Bump Dates"
+      const buttonTitle = "Save"
+      const formPromise = inputForm.show(formPrompt, buttonTitle)
+
+      inputForm.validate = function(formObject) {
+        const daysInput = formObject.values["bumpDays"]
+        return daysInput !== ""
+      }
+
+      let dc = new DateComponents();
+      formPromise.then(function(formObject) {
+        dc.day = Number(formObject.values["bumpDays"])
+      
+        for (const task of selection.tasks) {
+          console.log("looking at task: " + task.name)
+          if (task.deferDate) {
+            task.deferDate = calendar.dateByAddingDateComponents(task.deferDate, dc);
+          } else {
+            task.deferDate = calendar.dateByAddingDateComponents(defaultDefer, dc);
+          }
+          if (task.dueDate) {
+            task.dueDate = calendar.dateByAddingDateComponents(task.dueDate, dc);
+          }
+        }
+      });
+
+      formPromise.catch(function(error) {
+        console.log("Form cancelled", error.message);
+      });
+    });
+
+    action.validate = function(selection){
+      return selection.tasks.length >= 1
+    };
+        
+    return action;
+})();
