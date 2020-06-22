@@ -11,10 +11,6 @@
 }*/
 (() => {
     var action = new PlugIn.Action(function(selection) {
-      
-      const calendar = Calendar.current;
-      const defaultDefer = calendar.startOfDay(new Date())
-
       const daysInputField = new Form.Field.String(
         "bumpDays",
         "Days to bump dates:"
@@ -30,19 +26,21 @@
         return daysInput !== ""
       }
 
+      const calendar = Calendar.current;
       let dc = new DateComponents();
       formPromise.then(function(formObject) {
         dc.day = Number(formObject.values["bumpDays"])
-      
+
         for (const task of selection.tasks) {
-          console.log("looking at task: " + task.name)
-          if (task.deferDate) {
-            task.deferDate = calendar.dateByAddingDateComponents(task.deferDate, dc);
+          if (task.deferDate === null && task.dueDate === null) {
+            task.deferDate = calendar.dateByAddingDateComponents(calendar.startOfDay(new Date()), dc);
           } else {
-            task.deferDate = calendar.dateByAddingDateComponents(defaultDefer, dc);
-          }
-          if (task.dueDate) {
-            task.dueDate = calendar.dateByAddingDateComponents(task.dueDate, dc);
+            if (task.deferDate) {
+              task.deferDate = calendar.dateByAddingDateComponents(task.deferDate, dc);
+            }
+            if (task.dueDate) {
+              task.dueDate = calendar.dateByAddingDateComponents(task.dueDate, dc);
+            }
           }
         }
       });
@@ -55,6 +53,6 @@
     action.validate = function(selection){
       return selection.tasks.length >= 1
     };
-        
+
     return action;
 })();
